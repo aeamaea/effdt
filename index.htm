@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html> 
+	<head> 
+	<title>Effective Date Generator</title>
+	<meta charset="UTF-8" />
+	<meta name="author" content="Jonathan Rehm" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<meta name="keywords" content="peoplesoft effective date generator sql" />
+	<meta name="description" content="Page to assist in creating effective date checks for SQL statements used with PeopleSoft" />
+	<link rel="stylesheet" href="https://ajax.aspnetcdn.com/ajax/jquery.mobile/1.1.1/jquery.mobile-1.1.1.min.css" />
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+	<script src="https://ajax.aspnetcdn.com/ajax/jquery.mobile/1.1.1/jquery.mobile-1.1.1.min.js"></script>
+	<style type="text/css">
+		.content {
+			max-width:600px;
+			margin:0 auto;
+			filter: alpha(opacity=0);
+			opacity: 0;
+		}
+		#inputs {
+			font-size:12px;
+			font-family:"Courier New", monospace;
+			height:100px;
+		}
+		#output {
+			font-size:12px;
+			font-family:"Courier New", monospace;
+		}
+	</style>
+	
+	<script type="text/javascript">
+		// Google analytics
+		var _gaq = _gaq || [];
+		_gaq.push(['_setAccount', 'UA-29823625-1']);
+		_gaq.push(['_trackPageview']);
+
+		(function() {
+			var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+			ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+			var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+		})();
+	</script>
+</head> 
+<body> 
+
+	<div data-role="page">
+
+		<div data-role="header">
+			<h1>Effective Date Generator</h1>
+		</div><!-- /header -->
+
+		<div data-role="content" class="content">
+		
+			<form method="POST">
+				<div data-role="fieldcontain">
+					<label for="database">Database</label>
+					<select id="database" name="database" data-mini="true">
+						<option value="ORA">Oracle</option>
+						<option value="MS">SQL Server</option>
+					</select>
+				</div>
+				<div data-role="fieldcontain">
+					<label for="case">Character Case</label>
+					<select id="case" name="case" data-mini="true">
+						<option value="L">Lowercase</option>
+						<option value="M">Mixed case</option>
+						<option value="U">Uppercase</option>
+					</select>
+				</div>
+				<div data-role="fieldcontain">
+					<label for="inputs">
+						Inputs<br/>
+						<span style="font-size:10px">
+							<span style="display:block">e.g.</span>
+							<span style="display:block">&nbsp;&nbsp;&nbsp;&nbsp;stdnt_fa_term a</span>
+							<span style="display:block">&nbsp;&nbsp;&nbsp;&nbsp;emplid</span>
+							<span style="display:block">&nbsp;&nbsp;&nbsp;&nbsp;institution</span>
+							<span style="display:block">&nbsp;&nbsp;&nbsp;&nbsp;strm</span>
+						</span>
+					</label>
+					<textarea id="inputs" name="inputs"></textarea>
+				</div>
+				<div data-role="fieldcontain">
+					<label for="output">Output</label>
+					<textarea id="output" name="output" disabled="disabled"></textarea>
+				</div>
+				<input type="submit" value="Go" data-mini="true"/>
+			</form>
+			
+			<br />
+			
+			<p style="font-size:75%;text-align:center">Created by <a href="http://jonathan.rehm.me">Jonathan Rehm</a></p>
+		
+		</div><!-- /content -->
+
+	</div><!-- /page -->
+
+	<script type="text/javascript">
+		String.prototype.toProperCase = function () {
+			// Change dots, underscores, and open parantheses so the start of the words are found correctly, then change them back
+			return this.replace(/(\.|\_|\()/g, ' *$1* ').replace(/\w\S*/g, function(txt){return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();}).replace(/\s\*(.)\*\s/g, '$1');
+		};
+
+
+		$(document).ready(function() {
+			$('.content').fadeTo(1, 1);
+		
+			$('input[type="submit"]').click(function(event) {
+				event.preventDefault();
+				
+				// Get variables
+				var arr_inputs = $('#inputs').val().split(/\r\n|\r|\n/);
+				var arr_table = arr_inputs.shift().split(' ');
+				var cur_date = '';
+				switch ($('#database').val()) {
+					case 'ORA':
+						cur_date = 'sysdate';
+						break;
+					case 'MS':
+						cur_date = 'getdate()';
+						break;
+				}
+				var html = '';
+				
+				// Effective date
+				html += 'and ' + arr_table[1] + '.effdt = (\r\n';
+				html += '	select max(' + arr_table[1] + '1.effdt)\r\n';
+				html += '	from ps_' + arr_table[0] + ' ' + arr_table[1] + '1\r\n';
+				html += '	where 1=1\r\n';
+				
+				for (i=0; i<arr_inputs.length; i++) {
+					if ($.trim(arr_inputs[i]).length > 0) {
+						html += '	and ' + arr_table[1] + '1.' + $.trim(arr_inputs[i]) + ' = ' + arr_table[1] + '.' + $.trim(arr_inputs[i]) + '\r\n';
+					}
+				}
+				
+				html += '	and ' + arr_table[1] + '1.effdt <= ' + cur_date + ')\r\n';
+				
+				// Effective sequence
+				html += 'and ' + arr_table[1] + '.effseq = (\r\n';
+				html += '	select max(' + arr_table[1] + '1.effseq)\r\n';
+				html += '	from ps_' + arr_table[0] + ' ' + arr_table[1] + '1\r\n';
+				html += '	where 1=1\r\n';
+				
+				for (i=0; i<arr_inputs.length; i++) {
+					if ($.trim(arr_inputs[i]).length > 0) {
+						html += '	and ' + arr_table[1] + '1.' + $.trim(arr_inputs[i]) + ' = ' + arr_table[1] + '.' + $.trim(arr_inputs[i]) + '\r\n';
+					}
+				}
+				
+				html += '	and ' + arr_table[1] + '1.effdt = ' + arr_table[1] + '.effdt)';
+				
+				// Set case
+				switch ($('#case').val()) {
+					case 'L':
+						html = html.toLowerCase();
+						break;
+					case 'M':
+						html = html.toProperCase();
+						break;
+					case 'U':
+						html = html.toUpperCase();
+						break;
+				}
+				
+				// Change tabs to spaces
+				html = html.replace(/\t/g,'    ');
+				$('#output').html(html).each(function(){
+					this.rows = html.split('\r\n').length;
+				}).css('height','auto');
+				
+			});
+		});
+	</script>
+</body>
+</html>
