@@ -62,9 +62,11 @@
 				<div data-role="fieldcontain">
 					<label for="case">Character Case</label>
 					<select id="case" name="case" data-mini="true">
-						<option value="L">Lowercase</option>
-						<option value="M">Mixed case</option>
-						<option value="U">Uppercase</option>
+						<option value="D" selected="selected">Definitions Upper &amp; Keywords Lower</option>
+						<option value="K">Keywords Upper &amp; Definitions Lower</option>
+						<option value="L">All Lowercase</option>
+						<option value="U">All Uppercase</option>
+						<option value="P">Proper Case</option>
 					</select>
 				</div>
 				<div data-role="fieldcontain">
@@ -86,14 +88,33 @@
 				</div>
 				<input type="submit" value="Go" data-mini="true"/>
 			</form>
-			
-			<br />
-			
-			<p style="font-size:75%;text-align:center">Created by <a href="http://jonathan.rehm.me">Jonathan Rehm</a></p>
 		
 		</div><!-- /content -->
 
+		<div data-role="footer" data-position="fixed">
+			<p style="font-size:75%;text-align:center">Created by <a href="http://jonathan.rehm.me">Jonathan Rehm</a></p>
+		</div>
+
 	</div><!-- /page -->
+
+	<script type="text/html" id="effdt-template">
+		and <%alias%>.<%effdt%> = (
+			select max(<%alias%>1.<%effdt%>)
+			from <%ps%>_<%record%> <%alias%>1
+			where 1=1
+			<%keys%>
+			and <%alias%>1.<%effdt%> <= <%date%>)
+		and <%alias%>.effseq = (
+			select max(<%alias%>1.effseq)
+			from ps_<%record%> <%alias%>1
+			where 1=1
+			<%keys%>
+			and <%alias%>1.<%effdt%> = <%alias%>.<%effdt%>)
+	</script>
+
+	<script type="text/html" id="keys-template">
+		and <%alias%>1.<%fieldname%> = <%alias%>.<%fieldname%>
+	</script>
 
 	<script type="text/javascript">
 		String.prototype.toProperCase = function () {
@@ -105,13 +126,60 @@
 		$(document).ready(function() {
 			$('.content').fadeTo(1, 1);
 		
-			$('input[type="submit"]').click(function(event) {
-				event.preventDefault();
+			$('input[type="submit"]').click(function(e) {
+				e.preventDefault();
 				
-				// Get variables
-				var arr_inputs = $('#inputs').val().split(/\r\n|\r|\n/);
-				var arr_table = arr_inputs.shift().split(' ');
-				var cur_date = '';
+				var input = $('#inputs').val();
+					html = $('#effdt-template').html();
+					keys_template = $('#keys-template').html().replace(/[\r\n\t]/g, '');
+					effdt = 'effdt';
+					ps = 'ps';
+
+
+				// Set SQL's case
+				switch ($('#case').val()) {
+					case 'D':
+						input = input.toUpperCase();
+						effdt = effdt.toUpperCase();
+						ps = ps.toUpperCase();
+						html = html.toLowerCase();
+						keys_template = keys_template.toLowerCase();
+						break;
+					case 'K':
+						input = input.toLowerCase();
+						effdt = effdt.toLowerCase();
+						ps = ps.toLowerCase();
+						html = html.toUpperCase();
+						keys_template = keys_template.toUpperCase();
+						break;
+					case 'L':
+						input = input.toLowerCase();
+						effdt = effdt.toLowerCase();
+						ps = ps.toLowerCase();
+						html = html.toLowerCase();
+						keys_template = keys_template.toLowerCase();
+						break;
+					case 'P':
+						input = input.toProperCase();
+						effdt = effdt.toProperCase();
+						ps = ps.toProperCase();
+						html = html.toProperCase();
+						keys_template = keys_template.toProperCase();
+						break;
+					case 'U':
+						input = input.toUpperCase();
+						effdt = effdt.toUpperCase();
+						ps = ps.toUpperCase();
+						html = html.toUpperCase();
+						keys_template = keys_template.toUpperCase();
+						break;
+				}
+
+
+				// Break the input into useable chunks
+				var arr_inputs = input.split(/\r\n|\r|\n/);
+					arr_table = arr_inputs.shift().split(' ');
+					cur_date = '';
 				switch ($('#database').val()) {
 					case 'ORA':
 						cur_date = 'sysdate';
@@ -120,55 +188,37 @@
 						cur_date = 'getdate()';
 						break;
 				}
-				var html = '';
-				
-				// Effective date
-				html += 'and ' + arr_table[1] + '.effdt = (\r\n';
-				html += '	select max(' + arr_table[1] + '1.effdt)\r\n';
-				html += '	from ps_' + arr_table[0] + ' ' + arr_table[1] + '1\r\n';
-				html += '	where 1=1\r\n';
-				
+
+
+				// Build the key criteria
+				var keys = '';
 				for (i=0; i<arr_inputs.length; i++) {
 					if ($.trim(arr_inputs[i]).length > 0) {
-						html += '	and ' + arr_table[1] + '1.' + $.trim(arr_inputs[i]) + ' = ' + arr_table[1] + '.' + $.trim(arr_inputs[i]) + '\r\n';
+						keys += keys_template
+									.replace(/\<%alias%\>/gi, arr_table[1])
+									.replace(/\<%fieldname%\>/gi, $.trim(arr_inputs[i]))
+								+ '\r\n\t';
 					}
 				}
-				
-				html += '	and ' + arr_table[1] + '1.effdt <= ' + cur_date + ')\r\n';
-				
-				// Effective sequence
-				html += 'and ' + arr_table[1] + '.effseq = (\r\n';
-				html += '	select max(' + arr_table[1] + '1.effseq)\r\n';
-				html += '	from ps_' + arr_table[0] + ' ' + arr_table[1] + '1\r\n';
-				html += '	where 1=1\r\n';
-				
-				for (i=0; i<arr_inputs.length; i++) {
-					if ($.trim(arr_inputs[i]).length > 0) {
-						html += '	and ' + arr_table[1] + '1.' + $.trim(arr_inputs[i]) + ' = ' + arr_table[1] + '.' + $.trim(arr_inputs[i]) + '\r\n';
-					}
-				}
-				
-				html += '	and ' + arr_table[1] + '1.effdt = ' + arr_table[1] + '.effdt)';
-				
-				// Set case
-				switch ($('#case').val()) {
-					case 'L':
-						html = html.toLowerCase();
-						break;
-					case 'M':
-						html = html.toProperCase();
-						break;
-					case 'U':
-						html = html.toUpperCase();
-						break;
-				}
-				
-				// Change tabs to spaces
-				html = html.replace(/\t/g,'    ');
-				$('#output').html(html).each(function(){
-					this.rows = html.split('\r\n').length;
+				keys = keys.replace(/(.*)[\r\n]\t$/g, '$1'); // Removes trailing carriage return
+
+
+				// Build the SQL
+				sql = html
+					 .replace(/[\r\n]/, '')
+					 .replace(/\t\t/g, '')
+					 .replace(/\<%alias%\>/gi, arr_table[1])
+					 .replace(/\<%record%\>/gi, arr_table[0])
+					 .replace(/\<%keys%\>/gi, keys)
+					 .replace(/\<%effdt%\>/gi, effdt)
+					 .replace(/\<%ps%\>/gi, ps)
+					 .replace(/\<%date%\>/gi, cur_date);
+
+
+				// Display the results
+				$('#output').html(sql).each(function(){
+					this.rows = html.split('\n').length + 3;
 				}).css('height','auto');
-				
 			});
 		});
 	</script>
