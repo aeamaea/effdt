@@ -43,7 +43,7 @@
 </head> 
 <body> 
 
-	<div data-role="page">
+	<div data-role="page" data-theme="c">
 
 		<div data-role="header">
 			<h1>Effective Date Generator</h1>
@@ -104,9 +104,9 @@
 			where 1=1
 			<%keys%>
 			and <%alias%>1.<%effdt%> <= <%date%>)
-		and <%alias%>.effseq = (
+		and <%alias%>.<%effseq%> = (
 			select max(<%alias%>1.effseq)
-			from ps_<%record%> <%alias%>1
+			from <%ps%>_<%record%> <%alias%>1
 			where 1=1
 			<%keys%>
 			and <%alias%>1.<%effdt%> = <%alias%>.<%effdt%>)
@@ -133,6 +133,7 @@
 					html = $('#effdt-template').html();
 					keys_template = $('#keys-template').html().replace(/[\r\n\t]/g, '');
 					effdt = 'effdt';
+					effseq = 'effseq';
 					ps = 'ps';
 
 
@@ -141,6 +142,7 @@
 					case 'D':
 						input = input.toUpperCase();
 						effdt = effdt.toUpperCase();
+						effseq = effdt.toUpperCase();
 						ps = ps.toUpperCase();
 						html = html.toLowerCase();
 						keys_template = keys_template.toLowerCase();
@@ -148,6 +150,7 @@
 					case 'K':
 						input = input.toLowerCase();
 						effdt = effdt.toLowerCase();
+						effseq = effdt.toLowerCase();
 						ps = ps.toLowerCase();
 						html = html.toUpperCase();
 						keys_template = keys_template.toUpperCase();
@@ -155,6 +158,7 @@
 					case 'L':
 						input = input.toLowerCase();
 						effdt = effdt.toLowerCase();
+						effseq = effdt.toLowerCase();
 						ps = ps.toLowerCase();
 						html = html.toLowerCase();
 						keys_template = keys_template.toLowerCase();
@@ -162,6 +166,7 @@
 					case 'P':
 						input = input.toProperCase();
 						effdt = effdt.toProperCase();
+						effseq = effdt.toProperCase();
 						ps = ps.toProperCase();
 						html = html.toProperCase();
 						keys_template = keys_template.toProperCase();
@@ -169,6 +174,7 @@
 					case 'U':
 						input = input.toUpperCase();
 						effdt = effdt.toUpperCase();
+						effseq = effdt.toUpperCase();
 						ps = ps.toUpperCase();
 						html = html.toUpperCase();
 						keys_template = keys_template.toUpperCase();
@@ -211,6 +217,7 @@
 					 .replace(/\<%record%\>/gi, arr_table[0])
 					 .replace(/\<%keys%\>/gi, keys)
 					 .replace(/\<%effdt%\>/gi, effdt)
+					 .replace(/\<%effseq%\>/gi, effseq)
 					 .replace(/\<%ps%\>/gi, ps)
 					 .replace(/\<%date%\>/gi, cur_date);
 
