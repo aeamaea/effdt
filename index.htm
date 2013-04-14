@@ -1,30 +1,24 @@
 <!DOCTYPE html>
 <html> 
-	<head> 
+<head>
 	<title>Effective Date Generator</title>
 	<meta charset="UTF-8" />
-	<meta name="author" content="Jonathan Rehm" />
-	<meta name="viewport" content="width=device-width, initial-scale=1" />
-	<meta name="keywords" content="peoplesoft effective date generator sql" />
-	<meta name="description" content="Page to assist in creating effective date checks for SQL statements used with PeopleSoft" />
-	<link rel="stylesheet" href="https://ajax.aspnetcdn.com/ajax/jquery.mobile/1.1.1/jquery.mobile-1.1.1.min.css" />
-	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
-	<script src="https://ajax.aspnetcdn.com/ajax/jquery.mobile/1.1.1/jquery.mobile-1.1.1.min.js"></script>
+	<meta name="author" content="Jonathan Rehm">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="keywords" content="peoplesoft effective date generator sql">
+	<meta name="description" content="Page to assist in creating effective date checks for SQL statements used with PeopleSoft">
+	<link rel="stylesheet" href="https://ajax.aspnetcdn.com/ajax/jquery.mobile/1.1.1/jquery.mobile-1.1.1.min.css">
 	<style type="text/css">
 		.content {
-			max-width:600px;
-			margin:0 auto;
+			max-width: 600px;
+			margin: 0 auto;
 			filter: alpha(opacity=0);
 			opacity: 0;
 		}
-		#inputs {
-			font-size:12px;
-			font-family:"Courier New", monospace;
-			height:100px;
-		}
-		#output {
-			font-size:12px;
-			font-family:"Courier New", monospace;
+		#inputs, #output {
+			font-size: 12px;
+			font-family: "Courier New", monospace;
+			height: 100px;
 		}
 	</style>
 	
@@ -47,7 +41,7 @@
 
 		<div data-role="header">
 			<h1>Effective Date Generator</h1>
-		</div><!-- /header -->
+		</div>
 
 		<div data-role="content" class="content">
 		
@@ -116,6 +110,8 @@
 		and <%alias%>1.<%fieldname%> = <%alias%>.<%fieldname%>
 	</script>
 
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+	<script src="https://ajax.aspnetcdn.com/ajax/jquery.mobile/1.1.1/jquery.mobile-1.1.1.min.js"></script>
 	<script type="text/javascript">
 		String.prototype.toProperCase = function () {
 			// Change dots, underscores, and open parantheses so the start of the words are found correctly, then change them back
@@ -198,14 +194,15 @@
 
 				// Build the key criteria
 				var keys = '';
-				for (i=0; i<arr_inputs.length; i++) {
-					if ($.trim(arr_inputs[i]).length > 0) {
+				$.each(arr_inputs, function(index, item) {
+					item = $.trim(item);
+					if (item.length > 0) {
 						keys += keys_template
 									.replace(/\<%alias%\>/gi, arr_table[1])
-									.replace(/\<%fieldname%\>/gi, $.trim(arr_inputs[i]))
+									.replace(/\<%fieldname%\>/gi, item)
 								+ '\r\n\t';
 					}
-				}
+				});
 				keys = keys.replace(/(.*)[\r\n]\t$/g, '$1'); // Removes trailing carriage return
 
 
